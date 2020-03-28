@@ -4,6 +4,15 @@ import pprint
 import PTN
 from bs4 import BeautifulSoup 
 
+def cleanEntries(entries):
+    filtered = dict()
+    for entry in entries:
+        sub_name = entry.find_all('td')[2].text.strip('\n').replace('subtitle ','')
+        subtitle_location = entry.select('[href]')[0]['href'].replace('subtitles','subtitle')
+        filtered[sub_name] = subtitle_location
+    return filtered
+
+
 def getMovieName(fileName):
     info = PTN.parse(fileName)
     return info['title']
@@ -19,7 +28,6 @@ def fetchId(movie):
     print('Select your movie : (Please select first option if you are unsure)')
     for i in range(len(r)):
         print("{}. {}".format(i+1,r[i]['Title']))
-
     choice = int(input())-1
     print("The movie you selected : {} and its id : {}".format(r[choice]['Title'],r[choice]['imdbID']))
     return r[choice]['imdbID']
@@ -33,12 +41,38 @@ movie = getMovieName(args.file)
 lang = args.lang
 id = fetchId(movie)
 
-yify_url = f"https://yts-subs.com/movie-imdb/{id}"
+print("Fetching subtitle...")
+yify_url = f"https://yifysubtitles.com/movie-imdb/{id}"
 page = requests.get(yify_url)
 
-if r.status_code != 200:
+if page.status_code != 200:
     print(f"Subtitle for {movie} doesnt exist in Yify Subtitles Database")
     exit()
 
 soup = BeautifulSoup(page.content, 'html.parser')
-soup.find_all(class_='table .other-subs')
+table = soup.find_all(class_='other-subs')[0]
+entries = table.find_all('tr')
+lang_entries = list()
+for entry in entries[1:]:
+    if f'"sub-lang">{lang}' in str(entry):
+        lang_entries.append(entry)
+
+lang_entries = cleanEntries(lang_entries)
+print("Select a subtitle")
+index = 1
+for k,v in lang_entries.items():
+    print("{}. {}".format(index,k))
+    index += 1
+
+choice = int(input())-1
+print("The subtitle you selected : {} and its id : {}".format(list(lang_entries)[choice],lang_entries[list(lang_entries)[choice]]))
+
+zip_url = "https://www.yifysubtitles.com"+lang_entries[list(lang_entries)[choice]]+".zip"
+zip_page = requests.get(zip_url)
+if zip_page.status_code != 200:
+    print(f"Subtitle file not found")
+    exit()
+
+# with ZipFile(BytesIO(zip_page.content)) as zip_file:
+with open('.'.join(args.file.split('.')[:-1])+'.zip', 'wb') as f:   #filename.zip
+    f.write(zip_page.content)   
