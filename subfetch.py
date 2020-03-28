@@ -2,6 +2,7 @@ import argparse
 import requests
 import pprint
 import PTN
+from bs4 import BeautifulSoup 
 
 def getMovieName(fileName):
     info = PTN.parse(fileName)
@@ -32,4 +33,12 @@ movie = getMovieName(args.file)
 lang = args.lang
 id = fetchId(movie)
 
+yify_url = f"https://yts-subs.com/movie-imdb/{id}"
+page = requests.get(yify_url)
 
+if r.status_code != 200:
+    print(f"Subtitle for {movie} doesnt exist in Yify Subtitles Database")
+    exit()
+
+soup = BeautifulSoup(page.content, 'html.parser')
+soup.find_all(class_='table .other-subs')
