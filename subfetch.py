@@ -31,7 +31,7 @@ def fetchId(movie):
     for i in range(len(r)):
         print("{}. {}".format(i+1,r[i]['Title']))
     choice = int(input())-1
-    print("The movie you selected : {} and its id : {}".format(r[choice]['Title'],r[choice]['imdbID']))
+    print("The movie you selected : {} and its id : {}\n".format(r[choice]['Title'],r[choice]['imdbID']))
     return r[choice]['imdbID']
 
 parser = argparse.ArgumentParser(description='Fetch Yify Subtitles for a movie')
@@ -82,4 +82,4 @@ with ZipFile(BytesIO(zip_page.content)) as zip_file:
             with open(os.path.join(os.path.dirname(args.file),'.'.join(args.file.split('.')[:-1])+'.srt'), 'wb') as f:   #filename.srt
                 f.write(zip_file.open(contained_file).read())   
 
-print("Saved in ",os.path.join(os.path.dirname(args.file),'.'.join(args.file.split('.')[:-1])+'.srt'))
+print("\nSaved in ",os.path.join(os.path.dirname(args.file),'.'.join(args.file.split('.')[:-1])+'.srt'))

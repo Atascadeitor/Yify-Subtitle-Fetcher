@@ -1,0 +1,4 @@
+argparse
+requests
+parse-torrent-name
+beautifulsoup4
