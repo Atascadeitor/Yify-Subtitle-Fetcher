@@ -7,19 +7,22 @@ from io import BytesIO
 import os
 
 def cleanEntries(entries):
-    filtered = dict()
+    """Parses the html code into subtitle name and its respective location in the database"""
+    filtered = list()
     for entry in entries:
         sub_name = entry.find_all('td')[2].text.strip('\n').replace('subtitle ','')
         subtitle_location = entry.select('[href]')[0]['href'].replace('subtitles','subtitle')
-        filtered[sub_name] = subtitle_location
+        filtered.append((sub_name,subtitle_location))
     return filtered
 
 
 def getMovieName(fileName):
+    """Get movie name from the file name"""
     info = PTN.parse(fileName)
     return info['title']
 
 def fetchId(movie):
+    """Fetch IMDb Id of the movie"""
     apikey = 'de12b217'
     url = f"https://www.omdbapi.com/?apikey={apikey}&s={movie}"
     try:
@@ -57,28 +60,29 @@ table = soup.find_all(class_='other-subs')[0]
 entries = table.find_all('tr')
 lang_entries = list()
 for entry in entries[1:]:
+    # Filtering by the language
     if f'"sub-lang">{lang}' in str(entry):
         lang_entries.append(entry)
 
 lang_entries = cleanEntries(lang_entries)
-print("Select a subtitle :")
+print("Select a subtitle : Language =",lang)
 index = 1
-for k,v in lang_entries.items():
-    print("{}. {}".format(index,k))
+for entry in lang_entries:
+    print("{}. {}".format(index,entry[0]))
     index += 1
 
 choice = int(input())-1
-print("The subtitle you selected : ",list(lang_entries)[choice])
+print("The subtitle you selected : ",lang_entries[choice][0])
 
-zip_url = "https://www.yifysubtitles.com"+lang_entries[list(lang_entries)[choice]]+".zip"
+zip_url = "https://www.yifysubtitles.com"+lang_entries[choice][1]+".zip"
 zip_page = requests.get(zip_url)
 if zip_page.status_code != 200:
     print(f"Subtitle file not found")
     exit()
 
-with ZipFile(BytesIO(zip_page.content)) as zip_file:
+with ZipFile(BytesIO(zip_page.content)) as zip_file:    # Read the zip file in memory itself without writing into storage
     for contained_file in zip_file.namelist():
-        if(contained_file.endswith('.srt')):
+        if(contained_file.endswith('.srt')):            # Select the .srt file
             with open(os.path.join(os.path.dirname(args.file),'.'.join(args.file.split('.')[:-1])+'.srt'), 'wb') as f:   #filename.srt
                 f.write(zip_file.open(contained_file).read())   
 
