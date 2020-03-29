@@ -30,12 +30,17 @@ def fetchId(movie):
     except:
         print("No movie found with the name : ",movie)
         exit()
+    movies = list()
+    for item in r:
+        if item['Type'] == 'movie': # Filter only the movies
+            movies.append(item)
     print('Select your movie : (Please select first option if you are unsure)')
-    for i in range(len(r)):
-        print("{}. {}".format(i+1,r[i]['Title']))
+    for i in range(len(movies)):
+        print("{}. {}, {}".format(i+1,movies[i]['Title'],movies[i]['Year']))
+
     choice = int(input())-1
-    print("The movie you selected : {} and its id : {}\n".format(r[choice]['Title'],r[choice]['imdbID']))
-    return r[choice]['imdbID']
+    print("The movie you selected : {} and its id : {}\n".format(movies[choice]['Title'],movies[choice]['imdbID']))
+    return movies[choice]['imdbID']
 
 parser = argparse.ArgumentParser(description='Fetch Yify Subtitles for a movie')
 parser.add_argument('file', type=str, help='File name whose subtitle to be fetched')
@@ -56,7 +61,11 @@ if page.status_code != 200:
 
 print("Done")
 soup = BeautifulSoup(page.content, 'html.parser')
-table = soup.find_all(class_='other-subs')[0]
+try:
+    table = soup.find_all(class_='other-subs')[0]
+except:
+        print("Subtitle not found for the movie '"+movie+"' in Yify Database")
+        exit()
 entries = table.find_all('tr')
 lang_entries = list()
 for entry in entries[1:]:
